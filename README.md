@@ -1,5 +1,6 @@
 # WhatsApp Sticker Generator (FFmpeg Pro)
 
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-green.svg)
@@ -11,9 +12,11 @@
 ## ✨ About the Project
 This project simplifies the process of creating high-quality animated WebP stickers. Instead of manually using command-line tools, this app provides:
 - **Drag & Drop**: Simply drop your video file into the app.
+- **Batch Processing**: Process an entire folder of videos in one click.
 - **Video Preview & Trimming**: Choose exactly which part of the video you want to turn into a sticker using an interactive range slider.
-- **Smart Compression**: The app automatically adjusts the quality iteratively until the file size is under 500 KB, preserving as much detail as possible.
-- **Automated Workflow**: Uses OpenCV for frame extraction and FFmpeg for high-performance WebP encoding.
+- **Adaptive Quality Search (v2.0)**: The app uses mathematical interpolation to find the highest quality that stays under 500 KB with minimal iterations.
+- **Auto-Cleanup**: Only valid stickers are kept in the output folder; oversized or failed files are automatically deleted.
+- **Interactive Logs**: Monitor the rendering and compression process in real-time.
 
 ## ⚙️ Getting Started
 
@@ -57,8 +60,9 @@ Follow these instructions to set up the project on your local machine.
 2. **Import Video**: Drag and drop a video file into the "Drag & Drop Video Di Sini" area.
 3. **Select Range**: Use the green slider handles to select the start and end points of your sticker. You can preview the frames using the bottom slider.
 4. **Set Initial Quality**: Enter a starting quality value (default is 75).
-5. **Render**: Click **"Render Stiker WA"**. The app will process the video and automatically try to fit it under 500 KB.
-6. **Output**: Once finished, click **"Buka Folder Output"** to see your new `.webp` sticker.
+5. **Render**: Click **"Render Stiker WA"**. The app will process the video and automatically try to fit it under 500 KB using the adaptive algorithm.
+6. **Batch Mode**: Click **"Pilih Folder (Batch)"** to select a folder containing multiple videos. The app will process all videos using the same adaptive logic (starting at quality 75).
+7. **Output**: Once finished, click **"Buka Folder Output"** to see your new `.webp` stickers.
 
 ## 🤝 Contributing
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
