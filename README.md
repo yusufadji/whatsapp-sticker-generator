@@ -1,99 +1,79 @@
-# WhatsApp Sticker Generator
+# WhatsApp Sticker Generator (FFmpeg Pro)
 
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-green.svg)
-![Version](https://img.shields.io/badge/version-1.0-blue.svg?cacheSeconds=2592000)
-![Stargazers](https://img.shields.io/github/stars/yusufadji/whatsapp-sticker-generator)
-![Forks](https://img.shields.io/github/forks/yusufadji/whatsapp-sticker-generator)
+![Platform](https://img.shields.io/badge/platform-Windows-green.svg)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-Required-orange.svg)
 
 ## 🌟 Overview
-This project automates the creation of **WhatsApp stickers** from video frames using Python. It converts frames into **WebP format** and optimizes them to meet WhatsApp's size requirements.
+**WhatsApp Sticker Generator** is a desktop application built with Python that allows you to easily create animated stickers for WhatsApp from any video file. It features a user-friendly GUI with drag-and-drop support, video trimming, and automatic compression to ensure your stickers meet WhatsApp's strict file size limits (< 500 KB).
 
-## ✨ Features
-- **Convert image frames to WebP format** using [Google WebP](https://developers.google.com/speed/webp/download).
-- **Generate animated WhatsApp stickers** automatically.
-- **Adjust compression quality dynamically** to ensure stickers are under **500 KB**.
-- **Easy cleanup** for new sticker creation.
+## ✨ About the Project
+This project simplifies the process of creating high-quality animated WebP stickers. Instead of manually using command-line tools, this app provides:
+- **Drag & Drop**: Simply drop your video file into the app.
+- **Video Preview & Trimming**: Choose exactly which part of the video you want to turn into a sticker using an interactive range slider.
+- **Smart Compression**: The app automatically adjusts the quality iteratively until the file size is under 500 KB, preserving as much detail as possible.
+- **Automated Workflow**: Uses OpenCV for frame extraction and FFmpeg for high-performance WebP encoding.
 
-## ⚙️ Requirements
-- [Python 3.x](https://www.python.org/downloads/)
-- [Google WebP library](https://developers.google.com/speed/webp/download)
+## ⚙️ Getting Started
 
-## 📝 Installation
-### 1. Install Python
-Ensure you have Python 3.x installed. Download it from [Python's official website](https://www.python.org/downloads/).
+Follow these instructions to set up the project on your local machine.
 
-### 2. Install WebP Library
-#### 💻 Windows
-1. Download **WebP precompiled binaries** from [Google WebP Download](https://developers.google.com/speed/webp/download).
-2. Extract the files and add the path to your system environment variables.
+### Prerequisites
+- **Python 3.x**: [Download Python](https://www.python.org/downloads/)
+- **FFmpeg**: This tool is **required** for video processing.
+  - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html), extract, and add the `bin` folder to your System PATH.
+  - **Linux/macOS**: Use your package manager (e.g., `sudo apt install ffmpeg` or `brew install ffmpeg`).
 
-#### 💻 Linux
-For Debian-based (Ubuntu, Debian):
-```sh
-sudo apt update && sudo apt install webp
-```
-For Arch Linux:
-```sh
-sudo pacman -S libwebp
-```
+### Installation
+1. **Clone the repository**:
+   ```sh
+   git clone https://github.com/yusufadji/whatsapp-sticker-generator.git
+   cd whatsapp-sticker-generator
+   ```
 
-#### 💻 macOS
-```sh
-brew install webp
-```
+2. **Set up a Virtual Environment** (Recommended):
+   ```sh
+   # Create virtual environment
+   python -m venv venv
 
-### 3. Clone the Repository
-```sh
-git clone https://github.com/yusufadji/whatsapp-sticker-generator.git
-cd whatsapp-sticker-generator
-```
+   # Activate virtual environment
+   # On Windows:
+   .\venv\Scripts\activate
+   # On Linux/macOS:
+   source venv/bin/activate
+   ```
 
-## 🗂️ Project Structure
-```
-.
-├── aniwebpmaker.py   # Creates animated WebP from converted frames
-├── auto.py           # Automates compression and animation process
-├── clean.py          # Cleans workspace directories
-├── compressor.py     # Converts images to WebP format
-├── init.py           # Initializes required directories
-├── README.md         # Documentation
-```
-After running `init.py`, the structure includes:
-```
-.
-├── dst   # Stores final WebP sticker files
-├── orig  # Contains original input frames
-├── src   # Stores converted WebP frames
-```
+3. **Install dependencies**:
+   ```sh
+   pip install -r requirements.txt
+   ```
 
 ## 📝 Usage
-### 1. Initialize Directories
-Run the following command to create necessary directories:
-```sh
-python init.py
-```
+1. **Run the application**:
+   ```sh
+   python main.py
+   ```
+2. **Import Video**: Drag and drop a video file into the "Drag & Drop Video Di Sini" area.
+3. **Select Range**: Use the green slider handles to select the start and end points of your sticker. You can preview the frames using the bottom slider.
+4. **Set Initial Quality**: Enter a starting quality value (default is 75).
+5. **Render**: Click **"Render Stiker WA"**. The app will process the video and automatically try to fit it under 500 KB.
+6. **Output**: Once finished, click **"Buka Folder Output"** to see your new `.webp` sticker.
 
-### 2. Automate the Sticker Creation Process
-Run the following command to automatically compress images and create stickers:
-```sh
-python auto.py
-```
-The script will adjust **compression quality** dynamically until the final WebP file meets WhatsApp's **size limit (500 KB)**.
+## 🤝 Contributing
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-### 3. Clean the Workspace
-To reset and prepare for new sticker creation, run:
-```sh
-python clean.py
-```
-
-## 📑 Notes
-- If `auto.py` fails to reach the size limit even at the lowest compression setting, **manually reduce the number of frames** in `orig/` and rerun the script.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## ⚖️ License
-This project is licensed under the [MIT License](https://github.com/yusufadji/whatsapp-sticker-generator/blob/master/LICENSE).
+Distributed under the MIT License. See `LICENSE` for more information.
 
-## 👤 Author
-Developed by [Yusuf Bhaskara Adji](https://github.com/yusufadji). Feel free to contribute or report issues!
+## 👤 Contact
+[@yusufadji_asli](https://instagram.com/yusufadji_asli)
+
+Project Link: [https://github.com/yusufadji/whatsapp-sticker-generator](https://github.com/yusufadji/whatsapp-sticker-generator)
 

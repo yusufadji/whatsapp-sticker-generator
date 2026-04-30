@@ -5,3 +5,13 @@ src
 
 # cache
 __pycache__
+
+# Agents
+.agents
+.gemini
+
+# Environment variables
+.env
+
+# Virtual environment
+.venv
