@@ -92,6 +92,11 @@ def render_sticker(
 
     while iteration <= 40: # Meningkatkan batas iterasi untuk memastikan konvergensi
         if cancel_check_func():
+            if os.path.exists(out_path):
+                try:
+                    os.remove(out_path)
+                except OSError:
+                    pass
             return -1, "", 0.0
             
         if current_quality in tried_qualities or current_quality < 1 or current_quality > 100:
@@ -108,8 +113,18 @@ def render_sticker(
 
         rc = run_proc_and_wait(cmd, cancel_check_func)
         if rc == -1:
+            if os.path.exists(out_path):
+                try:
+                    os.remove(out_path)
+                except OSError:
+                    pass
             return -1, "", 0.0
         if rc != 0:
+            if os.path.exists(out_path):
+                try:
+                    os.remove(out_path)
+                except OSError:
+                    pass
             return -2, "", 0.0
 
         size_b = os.path.getsize(out_path)
@@ -132,27 +147,56 @@ def render_sticker(
             current_quality -= quality_step
         else:
             # Logika Adaptif
-            size_b - target_size
             
             if size_b > target_size:
-                # Terlalu besar, kurangi kualitas secara agresif/presisi
-                if size_b > 1024 * 1024: # > 1 MB (Ekstrem)
-                    step = 20
-                elif size_b > 750 * 1024: # 750KB - 1MB
-                    step = 10
-                elif size_b > 600 * 1024: # 600KB - 750KB
-                    step = 5
-                else: # 500KB - 600KB
-                    step = 1
-                current_quality -= step
-            else:
-                # Sudah di bawah target, tapi apakah bisa lebih dekat?
-                if size_kb < 400: # Terlalu kecil (jauh dari 500KB)
-                    current_quality += 3
-                elif size_kb < 470: # Agak kecil
-                    current_quality += 1
+                # Estimasi kualitas target (500 KB) menggunakan rasio atau interpolasi linear
+                target_kb = target_size / 1024.0
+                
+                if len(tried_qualities) >= 2:
+                    # Interpolasi linear antara dua percobaan terakhir
+                    qs = list(tried_qualities.keys())
+                    q1, q2 = qs[-2], qs[-1]
+                    s1, s2 = tried_qualities[q1], tried_qualities[q2]
+                    
+                    if abs(s1 - s2) > 0.1:
+                        # Rumus interpolasi: q = q1 + (target_s - s1) * (q2 - q1) / (s2 - s1)
+                        estimated_q = q1 + (target_kb - s1) * (q2 - q1) / (s2 - s1)
+                        next_q = int(round(estimated_q))
+                    else:
+                        next_q = current_quality - 5
                 else:
-                    # Sudah sangat dekat (470-500 KB)
+                    # Estimasi awal berbasis rasio (dengan faktor redaman 0.8 agar tidak terlalu drastis)
+                    ratio = size_kb / target_kb
+                    next_q = int(current_quality / (ratio ** 0.6))
+                
+                # Pastikan ada perubahan minimal 1 poin dan maksimal lompatan 30 poin
+                if next_q >= current_quality:
+                    next_q = current_quality - 1
+                if current_quality - next_q > 30:
+                    next_q = current_quality - 30
+                    
+                current_quality = max(1, next_q)
+            else:
+                # Sudah di bawah target, coba dekati 500 KB jika masih memungkinkan
+                if size_kb < 480: # Hanya jika masih ada ruang untuk naik
+                    target_kb = target_size / 1024.0
+                    if len(tried_qualities) >= 2:
+                        qs = list(tried_qualities.keys())
+                        q1, q2 = qs[-2], qs[-1]
+                        s1, s2 = tried_qualities[q1], tried_qualities[q2]
+                        if abs(s1 - s2) > 0.1:
+                            estimated_q = q1 + (target_kb - s1) * (q2 - q1) / (s2 - s1)
+                            next_q = int(round(estimated_q))
+                        else:
+                            next_q = current_quality + 1
+                    else:
+                        next_q = current_quality + 2
+                    
+                    if next_q <= current_quality:
+                        next_q = current_quality + 1
+                    current_quality = min(100, next_q)
+                else:
+                    # Sudah sangat dekat (480-500 KB)
                     return 0, out_path, size_kb
         
         iteration += 1
@@ -164,5 +208,12 @@ def render_sticker(
              cmd[-5] = str(best_quality) # Update qscale
              run_proc_and_wait(cmd, cancel_check_func)
         return 0, out_path, best_size_kb
-        
-    return -2, out_path, size_kb
+    
+    # Jika sampai sini berarti gagal menemukan kualitas yang pas di bawah target
+    if os.path.exists(out_path):
+        try:
+            os.remove(out_path)
+        except OSError:
+            pass
+            
+    return -2, "", 0.0

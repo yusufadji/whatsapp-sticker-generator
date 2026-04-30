@@ -1,3 +1,4 @@
-tkinterdnd2==0.4.3
-Pillow==12.2.0
-opencv-python==4.13.0.92
+tkinterdnd2==0.3.0
+Pillow==10.2.0
+opencv-python==4.9.0.80
+numpy==1.26.4
