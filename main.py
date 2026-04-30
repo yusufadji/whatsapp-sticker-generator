@@ -1,7 +1,7 @@
 import os
 import threading
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from tkinterdnd2 import TkinterDnD, DND_FILES
 from PIL import Image, ImageTk
 import cv2
@@ -10,7 +10,7 @@ from typing import List, Optional
 
 # Import modul internal
 from src.helpers import check_ffmpeg
-from src.video_processor import extract_video_frames, render_sticker
+from src.video_processor import extract_video_frames, render_sticker, get_video_duration
 
 # ---------------------------
 # Konfigurasi WhatsApp
@@ -273,13 +273,96 @@ def background_render_task() -> None:
             target_size=TARGET_SIZE,
             quality_step=QUALITY_STEP,
             cancel_check_func=lambda: cancel_requested,
-            progress_callback=lambda msg: root.after(0, lambda: update_progress_ui(msg))
+            progress_callback=lambda msg: root.after(0, lambda: update_progress_ui(msg)),
+            adaptive_mode=True
         )
 
         # Update UI di main thread
         root.after(0, lambda: handle_render_result(status, out_path, size_kb))
     finally:
         root.after(0, finish_ui_state)
+
+def batch_render_workflow() -> None:
+    """
+    Memulai alur kerja perenderan stiker secara batch untuk satu folder.
+    """
+    global processing_thread, cancel_requested
+    
+    if not check_ffmpeg():
+        return messagebox.showerror("Error", "FFmpeg tidak ditemukan di sistem!")
+        
+    folder_path = filedialog.askdirectory(title="Pilih Folder Berisi Video")
+    if not folder_path:
+        return
+        
+    start_btn.config(state="disabled")
+    cancel_btn.config(state="normal")
+    crf_entry.config(state="disabled")
+    batch_btn.config(state="disabled")
+    
+    log_text.config(state="normal")
+    log_text.delete("1.0", tk.END)
+    log_text.insert(tk.END, f"--- Memulai Proses Batch: {folder_path} ---\n")
+    log_text.config(state="disabled")
+
+    cancel_requested = False
+    processing_thread = threading.Thread(target=batch_render_task, args=(folder_path,))
+    processing_thread.start()
+
+def batch_render_task(folder_path: str) -> None:
+    """
+    Tugas background untuk menjalankan proses render batch.
+    """
+    global cancel_requested
+    
+    valid_extensions = ('.mp4', '.mov', '.avi', '.mkv', '.webm')
+    files_to_process = [f for f in os.listdir(folder_path) if f.lower().endswith(valid_extensions)]
+    
+    if not files_to_process:
+        root.after(0, lambda: update_progress_ui("Tidak ada file video yang ditemukan di folder tersebut.\n"))
+        root.after(0, finish_ui_state)
+        return
+
+    failed_files = []
+    
+    try:
+        for idx, filename in enumerate(files_to_process):
+            if cancel_requested:
+                root.after(0, lambda: update_progress_ui("--- Proses Batch Dibatalkan ---\n"))
+                break
+                
+            video_path = os.path.join(folder_path, filename)
+            duration = get_video_duration(video_path)
+            
+            root.after(0, lambda msg=f"\nMemproses {idx+1}/{len(files_to_process)}: {filename}\n": update_progress_ui(msg))
+            
+            # Parameter khusus batch
+            initial_q = 75
+            quality_step = 1
+            
+            status, out_path, size_kb = render_sticker(
+                video_path=video_path,
+                start_time=0.0,
+                end_time=duration,
+                initial_quality=initial_q,
+                target_size=TARGET_SIZE,
+                quality_step=quality_step,
+                cancel_check_func=lambda: cancel_requested,
+                progress_callback=lambda msg: root.after(0, lambda: update_progress_ui(msg)),
+                adaptive_mode=True
+            )
+            
+            # Evaluasi hasil
+            if status != 0 or size_kb > 500:
+                failed_files.append(filename)
+                
+    finally:
+        root.after(0, finish_ui_state)
+        if failed_files:
+            failed_msg = "Proses selesai, namun beberapa file gagal diproses atau kebesaran (>500KB):\n\n" + "\n".join(failed_files)
+            root.after(0, lambda: messagebox.showwarning("Laporan Batch", failed_msg))
+        elif not cancel_requested:
+            root.after(0, lambda: messagebox.showinfo("Laporan Batch", "Semua file berhasil diproses!"))
 
 def handle_render_result(status: int, out_path: str, size_kb: float) -> None:
     """
@@ -299,6 +382,7 @@ def finish_ui_state() -> None:
     start_btn.config(state="normal")
     cancel_btn.config(state="disabled")
     crf_entry.config(state="normal")
+    batch_btn.config(state="normal")
     
     log_text.config(state="normal")
     log_text.insert(tk.END, "--- Selesai ---\n")
@@ -365,6 +449,15 @@ if __name__ == "__main__":
     cancel_btn = ttk.Button(controls_frame, text="Batalkan", command=cancel_render, state="disabled")
     cancel_btn.grid(row=0, column=3, padx=6)
 
+    # Batch and Output Buttons
+    btn_frame = ttk.Frame(root)
+    btn_frame.pack(pady=8)
+    
+    batch_btn = ttk.Button(btn_frame, text="Pilih Folder (Batch)", command=batch_render_workflow)
+    batch_btn.grid(row=0, column=0, padx=6)
+    
+    ttk.Button(btn_frame, text="Buka Folder Output", command=lambda: os.startfile(os.path.abspath("output"))).grid(row=0, column=1, padx=6)
+
     # Progress area (Log Console)
     progress_frame = ttk.Frame(root)
     progress_frame.pack(fill="both", expand=True, padx=40, pady=5)
@@ -381,7 +474,7 @@ if __name__ == "__main__":
     log_text.pack(side="left", fill="both", expand=True)
     log_scroll.config(command=log_text.yview)
 
-    ttk.Button(root, text="Buka Folder Output", command=lambda: os.startfile(os.path.abspath("output"))).pack(pady=8)
+
 
     update_canvas()
     root.mainloop()
